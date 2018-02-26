@@ -41,6 +41,7 @@ public class RNBatchPushModule extends ReactContextBaseJavaModule implements Lif
 
       Batch.Push.setGCMSenderId(resources.getString(resources.getIdentifier("GCM_SENDER_ID", "string", packageName)));
       Batch.setConfig(new Config(this.batchAPIKey));
+      Batch.Push.setManualDisplay(true);
 
       startBatch();
     } catch (Exception e) {
