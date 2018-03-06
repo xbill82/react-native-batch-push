@@ -21,6 +21,8 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
+import android.support.v4.app.NotificationManagerCompat;
+
 import java.util.List;
 import java.util.Map;
 
@@ -90,6 +92,12 @@ public class RNBatchPushModule extends ReactContextBaseJavaModule implements Lif
     location.setLatitude(locationMap.getDouble("latitude"));
     location.setLongitude(locationMap.getDouble("longitude"));
     Batch.User.trackLocation(location);
+  }
+
+  @ReactMethod
+  public void cancelChatNotification() {
+    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(reactContext);
+    notificationManager.cancel(PushService.currentChatNotificationID);
   }
 
   @ReactMethod

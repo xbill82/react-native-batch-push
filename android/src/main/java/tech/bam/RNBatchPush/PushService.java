@@ -1,5 +1,10 @@
 package tech.bam.RNBatchPush;
 
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.app.Activity;
+import android.content.pm.PackageManager;
+import android.content.pm.ApplicationInfo;
+import android.os.Bundle;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -21,13 +26,13 @@ public class PushService extends JobIntentService {
      */
     static final int JOB_ID = 1002;
 
-    static ArrayList<Integer> ids = new ArrayList<>();
+    static int currentChatNotificationID = (int) (Math.random() * Integer.MAX_VALUE);
 
     /**
      * Convenience method for enqueuing work in to this service.
      */
     static void enqueueWork(Context context, Intent work) {
-        enqueueWork(context, PushService.class, JOB_ID, work);
+      enqueueWork(context, PushService.class, JOB_ID, work);
     }
 
     @Override
@@ -50,10 +55,20 @@ public class PushService extends JobIntentService {
                 m.createNotificationChannel(channel);
             }
 
-            // Assuming you have a drawable named notification_icon, can otherwise be anything you want
-            builder.setContentTitle(intent.getStringExtra(Batch.Push.TITLE_KEY))
-                    .setContentText(intent.getStringExtra(Batch.Push.ALERT_KEY))
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+            // We get the name of the icon to attach to the notification from the application meta-data
+            try {
+              ApplicationInfo ai = getPackageManager()
+                .getApplicationInfo(getApplicationContext().getPackageName(), PackageManager.GET_META_DATA);
+              Bundle bundle = ai.metaData;
+              int icon = bundle.getInt("com.batch.android.push.smallicon");
+
+              builder.setSmallIcon(icon)
+                      .setContentTitle(intent.getStringExtra(Batch.Push.TITLE_KEY))
+                      .setContentText(intent.getStringExtra(Batch.Push.ALERT_KEY))
+                      .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+            } catch (NameNotFoundException e) {
+
+            }
 
             // Create intent
             Intent launchIntent = new Intent(); // Create your own intent
@@ -66,11 +81,14 @@ public class PushService extends JobIntentService {
             // Display your notification
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
-            // "id" is supposed to be a unique id, in order to be able to update the notification if you want.
-            // If you don't care about updating it, you can simply make a random it, like below
-            int id = (int) (Math.random() * Integer.MAX_VALUE);
-            ids.add(id);
-            notificationManager.notify(id, builder.build());
+            // if the notification comes from the chat service, only display the last one
+            String notificationType = intent.getStringExtra("type");
+            if (notificationType != null && notificationType.equals("chat")) {
+              notificationManager.cancel(currentChatNotificationID);
+              notificationManager.notify(currentChatNotificationID, builder.build());
+            } else {
+              notificationManager.notify((int) (Math.random() * Integer.MAX_VALUE), builder.build());
+            }
 
             // Call Batch to keep track of that notification
             Batch.Push.onNotificationDisplayed(this, intent);
