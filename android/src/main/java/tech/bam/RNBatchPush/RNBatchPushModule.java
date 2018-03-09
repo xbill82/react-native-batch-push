@@ -95,12 +95,6 @@ public class RNBatchPushModule extends ReactContextBaseJavaModule implements Lif
   }
 
   @ReactMethod
-  public void cancelChatNotification() {
-    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(reactContext);
-    notificationManager.cancel(PushService.currentChatNotificationID);
-  }
-
-  @ReactMethod
   public void fetchNewNotifications(String userID, String authKey, final Promise promise) {
     try {
       BatchInboxFetcher inboxFetcher = Batch.Inbox.getFetcher(this.reactContext, userID, authKey);
